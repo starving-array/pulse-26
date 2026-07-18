@@ -5,7 +5,7 @@ export interface MultilingualRelay {
 }
 
 export interface TelemetryAnalysisResult {
-  status_level: "ACTIVE" | "WARNING" | "CRITICAL";
+  status_level: "ACTIVE" | "WARNING" | "CRITICAL" | "DIVERT_PROACTIVE";
   reasoning_output: string;
   volunteer_action: string;
   target_reroute_gate: string;

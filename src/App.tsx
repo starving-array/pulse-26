@@ -57,7 +57,7 @@ export default function App() {
   const analyticsGateDLatency = (0.5 + (gateDSliderValue / 50)).toFixed(1);
 
   // App logical states
-  const [statusLevel, setStatusLevel] = useState<"ACTIVE" | "WARNING" | "CRITICAL" | "LOCAL OVERRIDE">("WARNING");
+  const [statusLevel, setStatusLevel] = useState<"ACTIVE" | "WARNING" | "CRITICAL" | "DIVERT_PROACTIVE" | "LOCAL OVERRIDE">("WARNING");
   const [confidence, setConfidence] = useState(0.982);
   
   const [reasoningOutput, setReasoningOutput] = useState(
@@ -123,7 +123,7 @@ export default function App() {
 
   // Status updates in real-time as sliders and surge rate change (local simulation to keep response tight and responsive)
   useEffect(() => {
-    let calculatedStatus: "ACTIVE" | "WARNING" | "CRITICAL" | "LOCAL OVERRIDE" = "ACTIVE";
+    let calculatedStatus: "ACTIVE" | "WARNING" | "CRITICAL" | "DIVERT_PROACTIVE" | "LOCAL OVERRIDE" = "ACTIVE";
     if (surgeRate === "Zero-Flow Lockdown") {
       calculatedStatus = "CRITICAL";
     } else if (gateCSliderValue > 80 && gateDSliderValue > 80) {
@@ -132,34 +132,10 @@ export default function App() {
       calculatedStatus = "CRITICAL";
     } else if (gateCSliderValue >= 80 || gateDSliderValue >= 80) {
       calculatedStatus = "WARNING";
+    } else if (Math.abs(gateCSliderValue - gateDSliderValue) >= 30) {
+      calculatedStatus = "DIVERT_PROACTIVE";
     }
     setStatusLevel(calculatedStatus);
-
-    if (surgeRate === "Zero-Flow Lockdown") {
-      setToneStatus("Urgent / Directive");
-      setReasoningOutput("STADIUM LOCKDOWN IN EFFECT. Stop all crowd movements immediately. Instruct all fans to remain in place and wait for further security directives.");
-      setVolunteerAction("Initiate sector blockades and support emergency security forces.");
-      setTargetRerouteGate("NONE (LOCKDOWN)");
-      setSpanishScript("CIERRE DE ESTADIO EN VIGOR. Detengan todos los movimientos de personas de inmediato. Permanezcan en sus lugares y esperen instrucciones de seguridad.");
-      setFrenchScript("CONFINEMENT DU STADE EN VIGUEUR. Arrêtez immédiatement tout mouvement de foule. Veuillez rester sur place et attendre les consignes de sécurité.");
-      setTempSpanish("CIERRE DE ESTADIO EN VIGOR. Detengan todos los movimientos de personas de inmediato. Permanezcan en sus lugares y esperen instrucciones de seguridad.");
-      setTempFrench("CONFINEMENT DU STADE EN VIGUEUR. Arrêtez immédiatement tout mouvement de foule. Veuillez rester sur place et attendre les consignes de sécurité.");
-    } else if (gateCSliderValue > 80 && gateDSliderValue > 80) {
-      setToneStatus("Urgent / Alert");
-      setReasoningOutput(`All regional access points (Gate C at ${gateCSliderValue}% and Gate D at ${gateDSliderValue}%) are currently experiencing extreme capacity constraints due to the massive tournament crowd. We need to hold incoming pedestrian flows at the outer perimeter checkpoints immediately until internal concourses clear out safely.`);
-      setVolunteerAction("Hold all incoming pedestrian queues at outer perimeter checkpoints.");
-      setTargetRerouteGate("HOLD");
-      setSpanishScript(`Todos los puntos de acceso regional (Puerta C al ${gateCSliderValue}% y Puerta D al ${gateDSliderValue}%) están experimentando actualmente limitaciones extremas de capacidad debido a la multitud masiva del torneo. Necesitamos retener los flujos de peatones entrantes en los puntos de control del perímetro exterior de inmediato hasta que los pasillos internos se despejen de manera segura.`);
-      setFrenchScript(`Tous les points d'accès régionaux (Porte C à ${gateCSliderValue}% et Porte D à ${gateDSliderValue}%) connaissent actuellement des contraintes de capacité extrêmes en raison de la foule massive du tournoi. Nous devons retenir immédiatement les flux de piétons entrants aux points de contrôle du périmètre extérieur jusqu'à ce que les halls intérieurs se libèrent en toute sécurité.`);
-      setTempSpanish(`Todos los puntos de acceso regional (Puerta C al ${gateCSliderValue}% y Puerta D al ${gateDSliderValue}%) están experimentando actualmente limitaciones extremas de capacidad debido a la multitud masiva del torneo. Necesitamos retener los flujos de peatones entrantes en los puntos de control del perímetro exterior de inmediato hasta que los pasillos internos se despejen de manera segura.`);
-      setTempFrench(`Tous les points d'accès régionaux (Porte C à ${gateCSliderValue}% et Porte D à ${gateDSliderValue}%) connaissent actuellement des contraintes de capacité extrêmes en raison de la foule massive du tournoi. Nous devons retenir immédiatement les flux de piétons entrants aux points de contrôle du périmètre extérieur jusqu'à ce que les halls intérieurs se libèrent en toute sécurité.`);
-    } else {
-      if (fanContext === "Medical Distress") {
-        setToneStatus("Urgent / Directive");
-      } else {
-        setToneStatus(calculatedStatus === "CRITICAL" ? "Urgent / Alert" : calculatedStatus === "WARNING" ? "Alert / Directive" : "Calm / Informational");
-      }
-    }
   }, [gateCSliderValue, gateDSliderValue, fanContext, surgeRate]);
 
   // Loading screen steps simulator
@@ -189,6 +165,10 @@ export default function App() {
         reasoningOutputPrompt = "STADIUM LOCKDOWN IN EFFECT. Stop all crowd movements immediately. Instruct all fans to remain in place and wait for further security directives.";
       } else if (currentGateCVal > 80 && currentGateDVal > 80) {
         reasoningOutputPrompt = `All regional access points (Gate C at ${currentGateCVal}% and Gate D at ${currentGateDVal}%) are currently experiencing extreme capacity constraints due to the massive tournament crowd. We need to hold incoming pedestrian flows at the outer perimeter checkpoints immediately until internal concourses clear out safely.`;
+      } else if (Math.abs(currentGateCVal - currentGateDVal) >= 30) {
+        const higherGate = currentGateCVal > currentGateDVal ? "Gate C" : "Gate D";
+        const lowerGate = currentGateCVal > currentGateDVal ? "Gate D" : "Gate C";
+        reasoningOutputPrompt = `${higherGate} is at ${currentGateCVal}% capacity and ${lowerGate} is underutilized at ${currentGateDVal}%. Instruct volunteers to actively divert arriving spectators to ${lowerGate} to balance the stadium queue.`;
       } else if (currentGateCVal >= 0 && currentGateCVal <= 40) {
         reasoningOutputPrompt = `Gate C is moving smoothly at ${currentGateCVal}% with normal traffic from the Metro. Gate D is at ${currentGateDVal}%. Keep maintaining current flows.`;
       } else if (currentGateCVal >= 41 && currentGateCVal <= 79) {
@@ -844,6 +824,10 @@ NODE: asia-southeast1-run-container
                 ) : statusLevel === "WARNING" ? (
                   <div className="px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest bg-orange-500/10 text-orange-400 border border-orange-500/30">
                     WARNING
+                  </div>
+                ) : statusLevel === "DIVERT_PROACTIVE" ? (
+                  <div className="px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                    PROACTIVE DIVERT
                   </div>
                 ) : statusLevel === "LOCAL OVERRIDE" ? (
                   <div className="px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 animate-pulse">
