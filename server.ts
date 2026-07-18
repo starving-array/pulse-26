@@ -122,6 +122,57 @@ Telemetry Data:
 - Tone Applied: ${toneApplied}
 `;
 
+    const sourceGate = gateCDensity > gateDDensity ? "Gate C" : "Gate D";
+    const targetGate = gateCDensity > gateDDensity ? "Gate D" : "Gate C";
+    const sourceDensity = gateCDensity > gateDDensity ? gateCDensity : gateDDensity;
+    const targetDensity = gateCDensity > gateDDensity ? gateDDensity : gateCDensity;
+
+    // Pre-calculate fallback variables to inject dynamically into prompt and use as fallbacks
+    let calculatedRerouteGate = "Gate D";
+    if (surgeRate === "Zero-Flow Lockdown") {
+      calculatedRerouteGate = "NONE (LOCKDOWN)";
+    } else if (gateCDensity > 80 && gateDDensity > 80) {
+      calculatedRerouteGate = "HOLD";
+    } else if (gateCDensity >= 80 && gateDDensity < 40) {
+      calculatedRerouteGate = "Gate D";
+    } else if (gateDDensity >= 80 && gateCDensity < 40) {
+      calculatedRerouteGate = "Gate C";
+    } else if (statusLevel === "DIVERT_PROACTIVE") {
+      calculatedRerouteGate = gateCDensity > gateDDensity ? "Gate D" : "Gate C";
+    }
+
+    let calculatedVolunteerAction = "Monitor gate flow parameters and maintain standard crowd spacing.";
+    if (surgeRate === "Zero-Flow Lockdown") {
+      calculatedVolunteerAction = "Initiate sector blockades and support emergency security forces.";
+    } else if (gateCDensity > 80 && gateDDensity > 80) {
+      calculatedVolunteerAction = "Hold all incoming pedestrian queues at outer perimeter checkpoints.";
+    } else if (gateCDensity >= 80) {
+      calculatedVolunteerAction = "Deploy staff to active guide routes and redirect traffic to Gate D.";
+    } else if (statusLevel === "DIVERT_PROACTIVE") {
+      calculatedVolunteerAction = `Deploy staff to active guide routes and divert arriving traffic from ${sourceGate} to ${targetGate}.`;
+    }
+
+    let spanishScript = `Atención: el flujo está activo. Por favor, siga las indicaciones.`;
+    let frenchScript = `Attention : le flux est actif. Veuillez seguir les indications de sécurité.`;
+
+    if (surgeRate === "Zero-Flow Lockdown") {
+      spanishScript = "CIERRE DE ESTADIO EN VIGOR. Detengan todos los movimientos de personas de inmediato. Permanezcan en sus lugares y esperen instrucciones de seguridad.";
+      frenchScript = "CONFINEMENT DU STADE EN VIGUEUR. Arrêtez immédiatement tout mouvement de foule. Veuillez rester sur place et attendre les consignes de sécurité.";
+    } else if (gateCDensity > 80 && gateDDensity > 80) {
+      spanishScript = `Todos los puntos de acceso regional (Puerta C al ${gateCDensity}% y Puerta D al ${gateDDensity}%) están experimentando actualmente limitaciones extremas de capacidad debido a la multitud masiva del torneo. Necesitamos retener los flujos de peatones entrantes en los puntos de control del perímetro exterior de inmediato hasta que los pasillos internos se despejen de manera segura.`;
+      frenchScript = `Tous les points d'accès régionaux (Porte C à ${gateCDensity}% et Porte D à ${gateDDensity}%) connaissent actuellement des contraintes de capacité extrêmes en raison de la foule massive du tournoi. Nous devons retenir immédiatement les flux de piétons entrants aux points de contrôle du périmètre extérieur jusqu'à ce que les halls intérieurs se libèrent en toute sécurité.`;
+    } else if (gateCDensity >= 80) {
+      spanishScript = `Atención: la Puerta C está experimentando una congestión extrema del ${gateCDensity}%. Rediríjase a la Puerta D de inmediato.`;
+      frenchScript = `Attention : la Porte C connaît un encombrement extrême de ${gateCDensity}%. Veuillez vous rediriger vers la Porte D immédiatement.`;
+    } else if (statusLevel === "DIVERT_PROACTIVE") {
+      const higherGateEs = gateCDensity > gateDDensity ? "Puerta C" : "Puerta D";
+      const lowerGateEs = gateCDensity > gateDDensity ? "Puerta D" : "Puerta C";
+      const higherGateFr = gateCDensity > gateDDensity ? "Porte C" : "Porte D";
+      const lowerGateFr = gateCDensity > gateDDensity ? "Porte D" : "Porte C";
+      spanishScript = `Atención: La ${higherGateEs} está experimentando alta afluencia. Por favor, diríjase a la ${lowerGateEs} para un acceso más rápido.`;
+      frenchScript = `Attention : La ${higherGateFr} est encombrée. Veuillez vous diriger vers la ${lowerGateFr} pour un accès plus rapide.`;
+    }
+
     // 1. VARIABLE CONDITIONALS:
     // If the client didn't supply the prompt, fall back to calculating it server-side:
     let targetReasoningOutput = reasoningOutputPrompt;
@@ -131,9 +182,7 @@ Telemetry Data:
       targetReasoningOutput = `All regional access points (Gate C at ${gateCDensity}% and Gate D at ${gateDDensity}%) are currently experiencing extreme capacity constraints due to the massive tournament crowd. We need to hold incoming pedestrian flows at the outer perimeter checkpoints immediately until internal concourses clear out safely.`;
     } else if (!targetReasoningOutput) {
       if (statusLevel === "DIVERT_PROACTIVE") {
-        const higherGate = gateCDensity > gateDDensity ? "Gate C" : "Gate D";
-        const lowerGate = gateCDensity > gateDDensity ? "Gate D" : "Gate C";
-        targetReasoningOutput = `${higherGate} is at ${gateCDensity}% capacity and ${lowerGate} is underutilized at ${gateDDensity}%. Instruct volunteers to actively divert arriving spectators to ${lowerGate} to balance the stadium queue.`;
+        targetReasoningOutput = `${sourceGate} is at ${sourceDensity}% capacity and ${targetGate} is underutilized at ${targetDensity}%. Instruct volunteers to actively divert arriving spectators to ${targetGate} to balance the stadium queue.`;
       } else if (gateCDensity >= 0 && gateCDensity <= 40) {
         targetReasoningOutput = `Gate C is moving smoothly at ${gateCDensity}% with normal traffic from the Metro. Gate D is at ${gateDDensity}%. Keep maintaining current flows.`;
       } else if (gateCDensity >= 41 && gateCDensity <= 79) {
@@ -155,8 +204,9 @@ Requirements:
 1. "status_level": Must match: "${statusLevel}"
 2. "reasoning_output": You MUST output exactly this natural, conversational, simple-English statement:
    "${targetReasoningOutput}"
-3. "volunteer_action": Set a single actionable, concise task parameter statement instructing volunteers on the ground what to do (e.g., redirecting Level 100 ticket holders or deploying staff to redirect traffic).
-4. "target_reroute_gate": Recommend the low-density target gate ("${gateCDensity > gateDDensity ? "Gate D" : "Gate C"}") to redirect the active queue.
+3. "volunteer_action": You MUST output exactly this instruction for volunteers on the ground:
+   "${calculatedVolunteerAction}"
+4. "target_reroute_gate": Recommend the low-density target gate ("${calculatedRerouteGate}") to redirect the active queue.
 5. "multilingual_relay": 
    - "spanish_script": Megaphone broadcast script in Spanish matching the active tone.
    - "french_script": Megaphone broadcast script in French matching the active tone.
@@ -197,54 +247,6 @@ Requirements:
     } catch (apiError: any) {
       console.warn("Gemini API call failed or quota/billing limits exceeded. Falling back to local rules engine:", apiError.message || apiError);
       
-      // Compute deterministic fallback fields based on telemetry
-      let calculatedRerouteGate = "Gate D";
-      if (surgeRate === "Zero-Flow Lockdown") {
-        calculatedRerouteGate = "NONE (LOCKDOWN)";
-      } else if (gateCDensity > 80 && gateDDensity > 80) {
-        calculatedRerouteGate = "HOLD";
-      } else if (gateCDensity >= 80 && gateDDensity < 40) {
-        calculatedRerouteGate = "Gate D";
-      } else if (gateDDensity >= 80 && gateCDensity < 40) {
-        calculatedRerouteGate = "Gate C";
-      } else if (statusLevel === "DIVERT_PROACTIVE") {
-        calculatedRerouteGate = gateCDensity > gateDDensity ? "Gate D" : "Gate C";
-      }
-
-      let calculatedVolunteerAction = "Monitor gate flow parameters and maintain standard crowd spacing.";
-      if (surgeRate === "Zero-Flow Lockdown") {
-        calculatedVolunteerAction = "Initiate sector blockades and support emergency security forces.";
-      } else if (gateCDensity > 80 && gateDDensity > 80) {
-        calculatedVolunteerAction = "Hold all incoming pedestrian queues at outer perimeter checkpoints.";
-      } else if (gateCDensity >= 80) {
-        calculatedVolunteerAction = "Deploy staff to active guide routes and redirect traffic to Gate D.";
-      } else if (statusLevel === "DIVERT_PROACTIVE") {
-        const higherGate = gateCDensity > gateDDensity ? "Gate C" : "Gate D";
-        const lowerGate = gateCDensity > gateDDensity ? "Gate D" : "Gate C";
-        calculatedVolunteerAction = `Deploy staff to active guide routes and divert arriving traffic from ${higherGate} to ${lowerGate}.`;
-      }
-
-      let spanishScript = `Atención: el flujo está activo. Por favor, siga las indicaciones.`;
-      let frenchScript = `Attention : le flux est actif. Veuillez seguir les indications de sécurité.`;
-
-      if (surgeRate === "Zero-Flow Lockdown") {
-        spanishScript = "CIERRE DE ESTADIO EN VIGOR. Detengan todos los movimientos de personas de inmediato. Permanezcan en sus lugares y esperen instrucciones de seguridad.";
-        frenchScript = "CONFINEMENT DU STADE EN VIGUEUR. Arrêtez immédiatement tout mouvement de foule. Veuillez rester sur place et attendre les consignes de sécurité.";
-      } else if (gateCDensity > 80 && gateDDensity > 80) {
-        spanishScript = `Todos los puntos de acceso regional (Puerta C al ${gateCDensity}% y Puerta D al ${gateDDensity}%) están experimentando actualmente limitaciones extremas de capacidad debido a la multitud masiva del torneo. Necesitamos retener los flujos de peatones entrantes en los puntos de control del perímetro exterior de inmediato hasta que los pasillos internos se despejen de manera segura.`;
-        frenchScript = `Tous les points d'accès régionaux (Porte C à ${gateCDensity}% et Porte D à ${gateDDensity}%) connaissent actuellement des contraintes de capacité extrêmes en raison de la foule massive du tournoi. Nous devons retenir immédiatement les flux de piétons entrants aux points de contrôle du périmètre extérieur jusqu'à ce que les halls intérieurs se libèrent en toute sécurité.`;
-      } else if (gateCDensity >= 80) {
-        spanishScript = `Atención: la Puerta C está experimentando una congestión extrema del ${gateCDensity}%. Rediríjase a la Puerta D de inmediato.`;
-        frenchScript = `Attention : la Porte C connaît un encombrement extrême de ${gateCDensity}%. Veuillez vous rediriger vers la Porte D immédiatement.`;
-      } else if (statusLevel === "DIVERT_PROACTIVE") {
-        const higherGateEs = gateCDensity > gateDDensity ? "Puerta C" : "Puerta D";
-        const lowerGateEs = gateCDensity > gateDDensity ? "Puerta D" : "Puerta C";
-        const higherGateFr = gateCDensity > gateDDensity ? "Porte C" : "Porte D";
-        const lowerGateFr = gateCDensity > gateDDensity ? "Porte D" : "Porte C";
-        spanishScript = `Atención: La ${higherGateEs} está experimentando alta afluencia. Por favor, diríjase a la ${lowerGateEs} para un acceso más rápido.`;
-        frenchScript = `Attention : La ${higherGateFr} est encombrée. Veuillez vous diriger vers la ${lowerGateFr} pour un accès plus rapide.`;
-      }
-
       result = {
         status_level: statusLevel,
         reasoning_output: targetReasoningOutput,
