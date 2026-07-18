@@ -1,0 +1,6 @@
+{
+  "name": "Pulse26",
+  "description": "Front-line volunteer operations panel with real-time telemetry injection and explainable AI crowd-flow reasoning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
