@@ -168,7 +168,9 @@ export default function App() {
       } else if (Math.abs(currentGateCVal - currentGateDVal) >= 30) {
         const higherGate = currentGateCVal > currentGateDVal ? "Gate C" : "Gate D";
         const lowerGate = currentGateCVal > currentGateDVal ? "Gate D" : "Gate C";
-        reasoningOutputPrompt = `${higherGate} is at ${currentGateCVal}% capacity and ${lowerGate} is underutilized at ${currentGateDVal}%. Instruct volunteers to actively divert arriving spectators to ${lowerGate} to balance the stadium queue.`;
+        const higherDensity = currentGateCVal > currentGateDVal ? currentGateCVal : currentGateDVal;
+        const lowerDensity = currentGateCVal > currentGateDVal ? currentGateDVal : currentGateCVal;
+        reasoningOutputPrompt = `${higherGate} is experiencing heavy volume at ${higherDensity}%, while ${lowerGate} remains clear at ${lowerDensity}%. Operations must immediately divert arriving spectators toward ${lowerGate} to balance the terminal footprint.`;
       } else if (currentGateCVal >= 0 && currentGateCVal <= 40) {
         reasoningOutputPrompt = `Gate C is moving smoothly at ${currentGateCVal}% with normal traffic from the Metro. Gate D is at ${currentGateDVal}%. Keep maintaining current flows.`;
       } else if (currentGateCVal >= 41 && currentGateCVal <= 79) {

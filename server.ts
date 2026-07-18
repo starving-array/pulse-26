@@ -149,18 +149,18 @@ Telemetry Data:
     } else if (gateCDensity >= 80) {
       calculatedVolunteerAction = "Deploy staff to active guide routes and redirect traffic to Gate D.";
     } else if (statusLevel === "DIVERT_PROACTIVE") {
-      calculatedVolunteerAction = `Deploy staff to active guide routes and divert arriving traffic from ${sourceGate} to ${targetGate}.`;
+      calculatedVolunteerAction = `Redirect traffic away from ${sourceGate} and guide them to ${targetGate}.`;
     }
 
     let spanishScript = `Atención: el flujo está activo. Por favor, siga las indicaciones.`;
-    let frenchScript = `Attention : le flux est actif. Veuillez seguir les indications de sécurité.`;
+    let frenchScript = `Attention : le flux est actif. Veuillez seguir les indications de seguridad.`;
 
     if (surgeRate === "Zero-Flow Lockdown") {
       spanishScript = "CIERRE DE ESTADIO EN VIGOR. Detengan todos los movimientos de personas de inmediato. Permanezcan en sus lugares y esperen instrucciones de seguridad.";
       frenchScript = "CONFINEMENT DU STADE EN VIGUEUR. Arrêtez immédiatement tout mouvement de foule. Veuillez rester sur place et attendre les consignes de sécurité.";
     } else if (gateCDensity > 80 && gateDDensity > 80) {
       spanishScript = `Todos los puntos de acceso regional (Puerta C al ${gateCDensity}% y Puerta D al ${gateDDensity}%) están experimentando actualmente limitaciones extremas de capacidad debido a la multitud masiva del torneo. Necesitamos retener los flujos de peatones entrantes en los puntos de control del perímetro exterior de inmediato hasta que los pasillos internos se despejen de manera segura.`;
-      frenchScript = `Tous les points d'accès régionaux (Porte C à ${gateCDensity}% et Porte D à ${gateDDensity}%) connaissent actuellement des contraintes de capacité extrêmes en raison de la foule massive du tournoi. Nous devons retenir immédiatement les flux de piétons entrants aux points de contrôle du périmètre extérieur jusqu'à ce que les halls intérieurs se libèrent en toute sécurité.`;
+      frenchScript = `Tous les points d'accès regionales (Porte C à ${gateCDensity}% et Porte D à ${gateDDensity}%) connaissent actuellement des contraintes de capacité extrêmes en raison de la foule massive du tournoi. Nous devons retenir immédiatement les flux de piétons entrants aux points de contrôle du périmètre extérieur jusqu'à ce que les halls intérieurs se libèrent en toute sécurité.`;
     } else if (gateCDensity >= 80) {
       spanishScript = `Atención: la Puerta C está experimentando una congestión extrema del ${gateCDensity}%. Rediríjase a la Puerta D de inmediato.`;
       frenchScript = `Attention : la Porte C connaît un encombrement extrême de ${gateCDensity}%. Veuillez vous rediriger vers la Porte D immédiatement.`;
@@ -170,7 +170,7 @@ Telemetry Data:
       const higherGateFr = gateCDensity > gateDDensity ? "Porte C" : "Porte D";
       const lowerGateFr = gateCDensity > gateDDensity ? "Porte D" : "Porte C";
       spanishScript = `Atención: La ${higherGateEs} está experimentando alta afluencia. Por favor, diríjase a la ${lowerGateEs} para un acceso más rápido.`;
-      frenchScript = `Attention : La ${higherGateFr} est encombrée. Veuillez vous diriger vers la ${lowerGateFr} pour un accès plus rapide.`;
+      frenchScript = `Attention : La ${higherGateFr} est encombrée. Veuillez vous diriger vers la ${lowerGateFr} pour un acceso más rápido.`;
     }
 
     // 1. VARIABLE CONDITIONALS:
@@ -182,7 +182,7 @@ Telemetry Data:
       targetReasoningOutput = `All regional access points (Gate C at ${gateCDensity}% and Gate D at ${gateDDensity}%) are currently experiencing extreme capacity constraints due to the massive tournament crowd. We need to hold incoming pedestrian flows at the outer perimeter checkpoints immediately until internal concourses clear out safely.`;
     } else if (!targetReasoningOutput) {
       if (statusLevel === "DIVERT_PROACTIVE") {
-        targetReasoningOutput = `${sourceGate} is at ${sourceDensity}% capacity and ${targetGate} is underutilized at ${targetDensity}%. Instruct volunteers to actively divert arriving spectators to ${targetGate} to balance the stadium queue.`;
+        targetReasoningOutput = `${sourceGate} is experiencing heavy volume at ${sourceDensity}%, while ${targetGate} remains clear at ${targetDensity}%. Operations must immediately divert arriving spectators toward ${targetGate} to balance the terminal footprint.`;
       } else if (gateCDensity >= 0 && gateCDensity <= 40) {
         targetReasoningOutput = `Gate C is moving smoothly at ${gateCDensity}% with normal traffic from the Metro. Gate D is at ${gateDDensity}%. Keep maintaining current flows.`;
       } else if (gateCDensity >= 41 && gateCDensity <= 79) {
@@ -197,9 +197,18 @@ Telemetry Data:
       let response;
       const requestPayload = {
         model: "gemini-3.5-flash",
-        contents: `Perform crowd-flow operations analysis on this telemetry. Here are the constraints:
-${telemetryText}
-${divertInstruction ? `\nSpecial Instruction:\n- ${divertInstruction}\n` : ""}
+        contents: `You are the Pulse26 Stadium Telemetry Engine. Your primary directive is to analyze crowd-flow distribution across Sector North without ever interchanging or misrepresenting the raw gate telemetry values.
+
+[RAW TELEMETRY GROUND TRUTH]
+- Gate C Density: ${gateCDensity}%
+- Gate D Density: ${gateDDensity}%
+- Operational State: ${statusLevel}
+
+[CRITICAL INGRESS RULES]
+1. ABSOLUTE TRUTH: You must maintain strict data integrity. Never alter, swap, or interchange the percentage values of Gate C and Gate D under any circumstances.
+2. DISPARITY EVALUATION: If the operational state is "DIVERT_PROACTIVE", identify which gate has the mathematically higher density (the Source Gate) and which has the lower density (the Target Gate). 
+3. DIRECTIVE GENERATION: You must generate a 'reasoning_output' that clearly states the exact factual percentage of the crowded gate, notes that the emptier gate is underutilized with its exact factual percentage, and explicitly commands ground teams to route patrons from the higher-density gate to the lower-density gate.
+
 Requirements:
 1. "status_level": Must match: "${statusLevel}"
 2. "reasoning_output": You MUST output exactly this natural, conversational, simple-English statement:
