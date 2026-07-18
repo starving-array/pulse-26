@@ -3,8 +3,22 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { GoogleGenAI, Type } from "@google/genai";
+import fs from "fs";
+import os from "os";
 
 dotenv.config();
+
+// Handle inline JSON service account credentials on Vercel/cloud environments
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS && process.env.GOOGLE_APPLICATION_CREDENTIALS.trim().startsWith("{")) {
+  try {
+    const tempKeyPath = path.join(os.tmpdir(), "gcp-key.json");
+    fs.writeFileSync(tempKeyPath, process.env.GOOGLE_APPLICATION_CREDENTIALS.trim());
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = tempKeyPath;
+    console.log("🔑 Google Application Credentials written to temporary path:", tempKeyPath);
+  } catch (e: any) {
+    console.error("❌ Failed to write temporary credentials file:", e.message || e);
+  }
+}
 
 const app = express();
 const PORT = 3000;
