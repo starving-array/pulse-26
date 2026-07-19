@@ -63,6 +63,10 @@ export interface GeminiRequestPayload {
   config?: Record<string, unknown>;
 }
 
+/**
+ * Inbound telemetry payload representing real-time crowd density metrics
+ * across Gate C and Gate D, combined with Metro hub surge conditions.
+ */
 export interface TelemetryRequest {
   gateCDensity?: number;
   gateDDensity?: number;
@@ -73,12 +77,20 @@ export interface TelemetryRequest {
   reasoningOutputPrompt?: string;
 }
 
+/**
+ * Structure for multilingual emergency megaphone broadcasts,
+ * ensuring rapid passenger dispersal instructions in Spanish and French.
+ */
 export interface MultilingualRelay {
   spanish_script: string;
   french_script: string;
   tone_applied: string;
 }
 
+/**
+ * Complete Explainable AI (XAI) routing evaluation payload returned to the client,
+ * detailing crowd status levels, actionable ground directives, and caching metadata.
+ */
 export interface TelemetryResponse {
   status_level: "ACTIVE" | "WARNING" | "CRITICAL" | "DIVERT_PROACTIVE";
   reasoning_output: string;
@@ -114,6 +126,15 @@ export async function processGateTelemetry(requestPayload: GeminiRequestPayload)
 }
 
 // Core helper for status classification logic (exported for testing)
+/**
+ * Evaluates real-time Gate C/Gate D load balancing thresholds and Metro surge rates
+ * to classify stadium crowd congestion into deterministic operational states.
+ * 
+ * @param gateCDensity - Current passenger saturation percentage at Gate C (0-100)
+ * @param gateDDensity - Current passenger saturation percentage at Gate D (0-100)
+ * @param surgeRate - Categorical transit influx rate from adjacent Metro hubs
+ * @returns Operational status level governing proactive diversion protocols
+ */
 export function getStatusLevel(gateCDensity: number, gateDDensity: number, surgeRate: string): "ACTIVE" | "WARNING" | "CRITICAL" | "DIVERT_PROACTIVE" {
   if (surgeRate === "Zero-Flow Lockdown") {
     return "CRITICAL";
@@ -167,6 +188,7 @@ app.post("/api/analyze-telemetry", async (req, res) => {
       return res.status(429).json({ error: "Too many requests. Please try again later." });
     }
 
+    // --- Step 1: Perimeter Security & Parameter Bounds Validation (0-100) ---
     // 1. CAPTURE & BIN FIRST: At the absolute top of the request function, capture the raw gateCDensity and gateDDensity from the sandbox inputs and apply the 5% binning formula immediately
     const { gateCDensity: reqGateCDensity, gateDDensity: reqGateDDensity, gateCSliderValue, gateDSliderValue, surgeRate, fanContext, reasoningOutputPrompt } = req.body;
 
@@ -184,6 +206,7 @@ app.post("/api/analyze-telemetry", async (req, res) => {
       return res.status(400).json({ error: "Telemetry values must be valid numbers between 0 and 100." });
     }
 
+    // --- Step 2: Deterministic Operational Status Classification ---
     // Determine status level strictly by user directive rule:
     // If Gate C crosses 80%, status_level must become 'WARNING'. If it crosses 90%, it must become 'CRITICAL'. Otherwise ACTIVE.
     const statusLevel = getStatusLevel(gateCDensity, gateDDensity, surgeRate);
@@ -203,6 +226,7 @@ app.post("/api/analyze-telemetry", async (req, res) => {
     const metricsArray = [binnedGateC, binnedGateD];
     const cacheKey = `${JSON.stringify(metricsArray)}-${statusLevel}-${metroSurge}-${fanContext}`;
 
+    // --- Step 3: Edge Cache Lookup (90-Second TTL Evaluation) ---
     // 3. CHECK CACHE STORE: Look up the cacheKey. If it exists, return the cached payload instantly
     const cachedEntry = edgeCache[cacheKey];
     if (cachedEntry && now - cachedEntry.timestamp < 90000) {
@@ -298,6 +322,7 @@ Telemetry Data:
       }
     }
 
+    // --- Step 4: Explainable AI (XAI) Inference & Multilingual Relay Generation ---
     let result;
     try {
       let response;
