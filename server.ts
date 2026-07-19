@@ -51,11 +51,19 @@ app.use(express.json({ limit: "10kb" }));
 // Handle favicon requests instantly with 204 No Content
 app.get("/favicon.ico", (req, res) => res.status(204).end());
 
-const ai = new GoogleGenAI({
-  vertexai: true,
-  project: process.env.GOOGLE_CLOUD_PROJECT,
-  location: process.env.GOOGLE_CLOUD_LOCATION
-});
+const ai = new GoogleGenAI(
+  (process.env.GEMINI_API_KEY || process.env.VERTEX_AI_API_KEY)
+    ? { apiKey: process.env.GEMINI_API_KEY || process.env.VERTEX_AI_API_KEY }
+    : (process.env.GOOGLE_CLOUD_PROJECT
+        ? {
+            vertexai: true,
+            project: process.env.GOOGLE_CLOUD_PROJECT,
+            location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1"
+          }
+        : {
+            apiKey: "mock-api-key-for-ci-testing"
+          })
+);
 
 export interface GeminiRequestPayload {
   model: string;
