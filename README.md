@@ -75,4 +75,44 @@ For production-scale deployment at the 2026 World Cup, Pulse26 leverages a robus
 2. **Asynchronous Ingestion:** High-frequency tally events from thousands of physical stadium gates are streamed into **Google Cloud Pub/Sub**. This message queue buffers raw telemetry data, preventing sudden crowd spikes from synchronously overwhelming processing services.
 3. **Elastic Compute Processing:** Fully containerized **Google Cloud Run** instances act as the scalable worker pool. Configured to scale from zero to thousands of active containers instantly, they process incoming Pub/Sub queue tallies elastically, scaling down to zero during non-event hours to minimize costs.
 4. **High-Frequency Caching:** A dedicated **Cloud Memorystore for Redis** cluster serves as the high-availability inline cache. It stores active telemetry states and pre-rendered directional scripts, minimizing redundant heavy processing calls.
-5. **Grounded Inference:** **Vertex AI** orchestrates the Gemini model pipelines. By implementing active **Context Caching**, Vertex AI pre-loads static stadium blueprints, geographic maps, and emergency Standard Operating Procedures (SOPs) into memory, reducing initial token overhead and dropping inference latency by 90%.
+5. Grounded Inference: **Vertex AI** orchestrates the Gemini model pipelines. By implementing active **Context Caching**, Vertex AI pre-loads static stadium blueprints, geographic maps, and emergency Standard Operating Procedures (SOPs) into memory, reducing initial token overhead and dropping inference latency by 90%.
+
+---
+
+## 5. Local Setup and Testing
+
+To execute, verify, and test the Pulse26 operational terminal locally, follow these steps:
+
+### I. Prerequisites & Environment
+Ensure you have **Node.js** (v18+) installed. Clone the repository and configure your environment variables:
+```bash
+# Copy example environment configuration
+cp .env.example .env
+```
+Open `.env` and configure your GCP Project credentials (`GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`) or Vertex AI / Google Gen AI credentials.
+
+### II. Installation
+Install project dependencies:
+```bash
+npm install
+```
+
+### III. Development Server
+Start the local development server in watcher mode:
+```bash
+npm run dev
+```
+The application will launch locally at [http://localhost:3000](http://localhost:3000).
+
+### IV. Automated Tests
+Run the standalone unit test suite to verify telemetry bounds checking, null validation, and status classification rules:
+```bash
+npm run test
+```
+
+### V. Production Compilation
+Compile Vite frontend assets and bundle the Express server for production:
+```bash
+npm run build
+npm start
+```
