@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { GoogleGenAI, Type } from "@google/genai";
 import fs from "fs";
 import os from "os";
+import helmet from "helmet";
 
 dotenv.config();
 
@@ -15,12 +16,34 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS && process.env.GOOGLE_APPLICATION
     fs.writeFileSync(tempKeyPath, process.env.GOOGLE_APPLICATION_CREDENTIALS.trim());
     process.env.GOOGLE_APPLICATION_CREDENTIALS = tempKeyPath;
     console.log("🔑 Google Application Credentials written to temporary path:", tempKeyPath);
-  } catch (e: any) {
-    console.error("❌ Failed to write temporary credentials file:", e.message || e);
+  } catch (e: unknown) {
+    const err = e as Error;
+    console.error("❌ Failed to write temporary credentials file:", err.message || err);
   }
 }
 
 const app = express();
+app.use(helmet({ contentSecurityPolicy: false }));
+
+// Hardened CORS Origin Middleware supporting Vite dev server ports
+app.use((req, res, next) => {
+  const origins = process.env.CLIENT_URL 
+    ? [process.env.CLIENT_URL, "http://localhost:5173", "http://localhost:3000"] 
+    : ["http://localhost:5173", "http://localhost:3000"];
+  const origin = req.headers.origin;
+  if (origin && origins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+  next();
+});
+
 const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
@@ -34,11 +57,52 @@ const ai = new GoogleGenAI({
   location: process.env.GOOGLE_CLOUD_LOCATION
 });
 
+export interface GeminiRequestPayload {
+  model: string;
+  contents: string;
+  config?: Record<string, unknown>;
+}
+
+export interface TelemetryRequest {
+  gateCDensity?: number;
+  gateDDensity?: number;
+  gateCSliderValue?: number;
+  gateDSliderValue?: number;
+  surgeRate: string;
+  fanContext: string;
+  reasoningOutputPrompt?: string;
+}
+
+export interface MultilingualRelay {
+  spanish_script: string;
+  french_script: string;
+  tone_applied: string;
+}
+
+export interface TelemetryResponse {
+  status_level: "ACTIVE" | "WARNING" | "CRITICAL" | "DIVERT_PROACTIVE";
+  reasoning_output: string;
+  volunteer_action: string;
+  target_reroute_gate: string;
+  multilingual_relay: MultilingualRelay;
+  cache_status?: "HIT" | "MISS";
+}
+
+// In-memory edge cache store
+interface CacheEntry {
+  timestamp: number;
+  data: TelemetryResponse;
+}
+const edgeCache: Record<string, CacheEntry> = {};
+
 /**
- * Core processor for Pulse26 stadium gate telemetry metrics.
- * Exclusively uses Vertex AI endpoints using Application Default Credentials (ADC) context.
+ * Explainable AI (XAI) engine for Predictive Stadium Crowd Routing.
+ * Evaluates real-time passenger density and controls Gate C/Gate D Load Balancing
+ * via a Multilingual Megaphone Relay of emergency directives.
+ *
+ * @param requestPayload Structured Gemini payload config with text prompts
  */
-export async function processGateTelemetry(requestPayload: any) {
+export async function processGateTelemetry(requestPayload: GeminiRequestPayload) {
   // Standard model configuration for Vertex AI pipeline
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
@@ -49,40 +113,80 @@ export async function processGateTelemetry(requestPayload: any) {
   return response;
 }
 
-// In-memory edge cache store
-interface CacheEntry {
-  timestamp: number;
-  data: any;
+// Core helper for status classification logic (exported for testing)
+export function getStatusLevel(gateCDensity: number, gateDDensity: number, surgeRate: string): "ACTIVE" | "WARNING" | "CRITICAL" | "DIVERT_PROACTIVE" {
+  if (surgeRate === "Zero-Flow Lockdown") {
+    return "CRITICAL";
+  } else if (gateCDensity > 80 && gateDDensity > 80) {
+    return "CRITICAL";
+  } else if (gateCDensity >= 90) {
+    return "CRITICAL";
+  } else if (gateCDensity >= 80) {
+    return "WARNING";
+  } else if (Math.abs(gateCDensity - gateDDensity) >= 30) {
+    return "DIVERT_PROACTIVE";
+  }
+  return "ACTIVE";
 }
-const edgeCache: Record<string, CacheEntry> = {};
 
-// Full stack telemetry analysis endpoint
+// In-memory rate limiting store
+interface RateLimitData {
+  count: number;
+  resetTime: number;
+}
+const ipRequestCounts: Record<string, RateLimitData> = {};
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 100; // Max 100 requests per minute
+
+/**
+ * Explainable AI (XAI) endpoint for real-time telemetry processing.
+ * Performs Predictive Stadium Crowd Routing and Gate C/Gate D Load Balancing
+ * using a Multilingual Megaphone Relay backup script.
+ */
 app.post("/api/analyze-telemetry", async (req, res) => {
   try {
+    const ip = String(req.ip || req.headers["x-forwarded-for"] || "unknown");
+    const now = Date.now();
+
+    // Periodic garbage collection to prevent memory leaks from expired IP records
+    if (Math.random() < 0.05) {
+      for (const ipKey in ipRequestCounts) {
+        if (now > ipRequestCounts[ipKey].resetTime) {
+          delete ipRequestCounts[ipKey];
+        }
+      }
+    }
+
+    if (!ipRequestCounts[ip] || now > ipRequestCounts[ip].resetTime) {
+      ipRequestCounts[ip] = { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS };
+    } else {
+      ipRequestCounts[ip].count++;
+    }
+
+    if (ipRequestCounts[ip].count > MAX_REQUESTS_PER_WINDOW) {
+      return res.status(429).json({ error: "Too many requests. Please try again later." });
+    }
+
     // 1. CAPTURE & BIN FIRST: At the absolute top of the request function, capture the raw gateCDensity and gateDDensity from the sandbox inputs and apply the 5% binning formula immediately
     const { gateCDensity: reqGateCDensity, gateDDensity: reqGateDDensity, gateCSliderValue, gateDSliderValue, surgeRate, fanContext, reasoningOutputPrompt } = req.body;
 
     const gateCDensity = gateCSliderValue !== undefined ? gateCSliderValue : reqGateCDensity;
     const gateDDensity = gateDSliderValue !== undefined ? gateDSliderValue : reqGateDDensity;
 
-    if (gateCDensity === undefined || gateDDensity === undefined || !surgeRate || !fanContext) {
+    if (gateCDensity === undefined || gateDDensity === undefined || gateCDensity === null || gateDDensity === null || !surgeRate || !fanContext) {
       return res.status(400).json({ error: "Missing required telemetry parameters." });
+    }
+
+    // Input parameter bounds (0-100) validation guard rail
+    const numC = Number(gateCDensity);
+    const numD = Number(gateDDensity);
+    if (isNaN(numC) || numC < 0 || numC > 100 || isNaN(numD) || numD < 0 || numD > 100) {
+      return res.status(400).json({ error: "Telemetry values must be valid numbers between 0 and 100." });
     }
 
     // Determine status level strictly by user directive rule:
     // If Gate C crosses 80%, status_level must become 'WARNING'. If it crosses 90%, it must become 'CRITICAL'. Otherwise ACTIVE.
-    let statusLevel: "ACTIVE" | "WARNING" | "CRITICAL" | "DIVERT_PROACTIVE" = "ACTIVE";
-    if (surgeRate === "Zero-Flow Lockdown") {
-      statusLevel = "CRITICAL";
-    } else if (gateCDensity > 80 && gateDDensity > 80) {
-      statusLevel = "CRITICAL";
-    } else if (gateCDensity >= 90) {
-      statusLevel = "CRITICAL";
-    } else if (gateCDensity >= 80) {
-      statusLevel = "WARNING";
-    } else if (Math.abs(gateCDensity - gateDDensity) >= 30) {
-      statusLevel = "DIVERT_PROACTIVE";
-    }
+    const statusLevel = getStatusLevel(gateCDensity, gateDDensity, surgeRate);
 
     let divertInstruction = "";
     if (statusLevel === "DIVERT_PROACTIVE") {
@@ -101,7 +205,6 @@ app.post("/api/analyze-telemetry", async (req, res) => {
 
     // 3. CHECK CACHE STORE: Look up the cacheKey. If it exists, return the cached payload instantly
     const cachedEntry = edgeCache[cacheKey];
-    const now = Date.now();
     if (cachedEntry && now - cachedEntry.timestamp < 90000) {
       console.log(`[CACHE_HIT] Serving stored inference data for key: ${cacheKey}`);
       const responseData = { ...cachedEntry.data, cache_status: "HIT" };
@@ -256,8 +359,9 @@ Requirements:
       }
 
       result = JSON.parse(resultText);
-    } catch (apiError: any) {
-      console.warn("Gemini API call failed or quota/billing limits exceeded. Falling back to local rules engine:", apiError.message || apiError);
+    } catch (apiError: unknown) {
+      const err = apiError as Error;
+      console.warn("Gemini API call failed or quota/billing limits exceeded. Falling back to local rules engine:", err.message || err);
       
       result = {
         status_level: statusLevel,
@@ -306,16 +410,17 @@ Requirements:
 
     const responseData = { ...result, cache_status: "MISS" };
     return res.json(responseData);
-  } catch (error: any) {
-    console.error("Telemetry analysis failed:", error);
+  } catch (error: unknown) {
+    const err = error as { status?: number; code?: number; message?: string };
+    console.error("Telemetry analysis failed:", err);
     
     const isQuota = 
-      error?.status === 429 || 
-      error?.code === 429 || 
-      String(error?.message || "").toLowerCase().includes("quota") || 
-      String(error?.message || "").toLowerCase().includes("resource_exhausted") || 
-      String(error?.message || "").toLowerCase().includes("rate limit") ||
-      String(error?.message || "").includes("429");
+      err?.status === 429 || 
+      err?.code === 429 || 
+      String(err?.message || "").toLowerCase().includes("quota") || 
+      String(err?.message || "").toLowerCase().includes("resource_exhausted") || 
+      String(err?.message || "").toLowerCase().includes("rate limit") ||
+      String(err?.message || "").includes("429");
 
     if (isQuota) {
       return res.status(429).json({
@@ -324,7 +429,7 @@ Requirements:
       });
     }
 
-    return res.status(500).json({ error: error.message || "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -352,7 +457,7 @@ async function startServer() {
   });
 }
 
-if (!process.env.VERCEL) {
+if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   startServer();
 }
 

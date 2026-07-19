@@ -140,7 +140,7 @@ export default function App() {
 
   // Loading screen steps simulator
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (loading) {
       setLoadingStep(0);
       interval = setInterval(() => {
@@ -240,16 +240,17 @@ export default function App() {
 [${timeStr}] VERIFY_CONSENSUS: 3/3 SECURITY_JURORS_OK
 \n` + prev);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       
+      const errorObj = err as { status?: number; code?: number; message?: string };
       const isQuotaError = 
-        err.status === 429 || 
-        err.code === 429 || 
-        String(err.message || "").toLowerCase().includes("quota") || 
-        String(err.message || "").toLowerCase().includes("resource_exhausted") || 
-        String(err.message || "").toLowerCase().includes("rate limit") ||
-        String(err.message || "").includes("429");
+        errorObj.status === 429 || 
+        errorObj.code === 429 || 
+        String(errorObj.message || "").toLowerCase().includes("quota") || 
+        String(errorObj.message || "").toLowerCase().includes("resource_exhausted") || 
+        String(errorObj.message || "").toLowerCase().includes("rate limit") ||
+        String(errorObj.message || "").includes("429");
 
       let logMessage = "";
       const timeStr = new Date().toISOString().substring(11, 19);
@@ -512,9 +513,10 @@ NODE: asia-southeast1-run-container
       setRawLog(prev => `${reportText}\n\n` + prev);
       addLog("PULSE26 CORE ARCHITECTURE AUDIT REPORT generated successfully!");
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      addLog(`Audit Encountered Error: ${err.message}. Generating fallback report...`);
+      const errorObj = err as Error;
+      addLog(`Audit Encountered Error: ${errorObj.message}. Generating fallback report...`);
       const reportTimestamp = new Date().toISOString();
       const reportText = `================================================================================
                     PULSE26 CORE ARCHITECTURE AUDIT REPORT
@@ -620,7 +622,7 @@ NODE: asia-southeast1-run-container
     <div className="bg-[#050505] min-h-screen text-[#d1d1d1] font-sans antialiased overflow-x-hidden selection:bg-cyan-500/30">
       
       {/* TopNavBar */}
-      <nav className="flex justify-between items-center w-full px-8 h-16 fixed top-0 z-50 bg-[#0a0a0a] border-b border-white/10 shadow-lg">
+      <header className="flex justify-between items-center w-full px-8 h-16 fixed top-0 z-50 bg-[#0a0a0a] border-b border-white/10 shadow-lg">
         <div className="flex items-center gap-4">
           <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
           <span className="font-sans text-sm font-bold tracking-[0.3em] uppercase text-white">
@@ -693,7 +695,7 @@ NODE: asia-southeast1-run-container
             />
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* SideNavBar (Desktop Only) */}
       <aside className="hidden md:flex flex-col h-full py-6 px-4 gap-2 bg-[#0a0a0a] border-r border-white/10 h-screen w-64 fixed left-0 top-0 pt-20 z-40">
@@ -868,7 +870,7 @@ NODE: asia-southeast1-run-container
 
                 <div className="p-6 space-y-6">
                   {/* Big Serif Box as shown in Elegant Dark Theme */}
-                  <div className="serif-font text-xl md:text-2xl leading-relaxed text-gray-300 p-6 bg-white/[0.01] border border-white/5 rounded-xl shadow-inner">
+                  <output className="serif-font text-xl md:text-2xl leading-relaxed text-gray-300 p-6 bg-white/[0.01] border border-white/5 rounded-xl shadow-inner block" aria-live="polite">
                     <p className="text-xs font-mono text-cyan-400 uppercase tracking-widest mb-3 italic">// Unified Context Resolution</p>
                     <p className="mb-4">
                       {reasoningOutput}
@@ -877,7 +879,7 @@ NODE: asia-southeast1-run-container
                       <span>Target Gate Recommendation: <b className="text-cyan-400">{targetRerouteGate}</b></span>
                       <span>Primary Ground Action: <b className="text-cyan-400">{volunteerAction.length > 55 ? volunteerAction.substring(0, 55) + "..." : volunteerAction}</b></span>
                     </div>
-                  </div>
+                  </output>
                   
                   {/* Raw stream terminal feed */}
                   <div className="flex flex-col">
@@ -962,7 +964,7 @@ NODE: asia-southeast1-run-container
                     />
                     <select
                       value={newDirectivePriority}
-                      onChange={(e: any) => setNewDirectivePriority(e.target.value)}
+                      onChange={(e) => setNewDirectivePriority(e.target.value as "HIGH" | "MED" | "LOW")}
                       className="bg-black/40 border border-white/10 text-[10px] text-white rounded-lg px-2 py-2 focus:ring-1 focus:ring-cyan-400 font-mono"
                     >
                       <option value="HIGH">HIGH</option>
@@ -1183,7 +1185,11 @@ NODE: asia-southeast1-run-container
                         max="100"
                         value={gateCSliderValue}
                         onChange={(e) => setGateCSliderValue(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer focus:ring-2 focus:ring-cyan-400 focus:outline-none"
+                        aria-label="Gate C Density Slider"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={gateCSliderValue}
                       />
                       <div className="flex justify-between text-[9px] font-mono text-white/20">
                         <span>Min Flow</span>
@@ -1202,7 +1208,11 @@ NODE: asia-southeast1-run-container
                         max="100"
                         value={gateDSliderValue}
                         onChange={(e) => setGateDSliderValue(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer focus:ring-2 focus:ring-cyan-400 focus:outline-none"
+                        aria-label="Gate D Density Slider"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={gateDSliderValue}
                       />
                     </div>
                   </div>
