@@ -28,6 +28,9 @@ import {
   Trash2
 } from "lucide-react";
 import { Directive } from "./types";
+import { Header } from "./components/Header";
+import { Sidebar } from "./components/Sidebar";
+import { ScriptPanel } from "./components/ScriptPanel";
 
 export default function App() {
   // Sandbox State Bindings
@@ -622,164 +625,10 @@ NODE: asia-southeast1-run-container
     <div className="bg-[#050505] min-h-screen text-[#d1d1d1] font-sans antialiased overflow-x-hidden selection:bg-cyan-500/30">
       
       {/* TopNavBar */}
-      <header className="flex justify-between items-center w-full px-8 h-16 fixed top-0 z-50 bg-[#0a0a0a] border-b border-white/10 shadow-lg">
-        <div className="flex items-center gap-4">
-          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
-          <span className="font-sans text-sm font-bold tracking-[0.3em] uppercase text-white">
-            Pulse26 <span className="text-white/20 font-light ml-1">// System Core</span>
-          </span>
-          <div className="hidden md:flex gap-6 ml-10 items-center h-full">
-            <button 
-              onClick={() => setCurrentView("operations")}
-              className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
-                currentView === "operations" 
-                  ? "text-cyan-400 font-bold border-cyan-400" 
-                  : "text-[#c2c6d7] hover:text-white border-transparent"
-              }`}
-            >
-              Operations
-            </button>
-            <button 
-              onClick={() => setCurrentView("system-architecture")}
-              className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
-                currentView === "system-architecture" 
-                  ? "text-cyan-400 font-bold border-cyan-400" 
-                  : "text-[#c2c6d7] hover:text-white border-transparent"
-              }`}
-            >
-              System Architecture
-            </button>
-            <button 
-              onClick={() => setCurrentView("analytics")}
-              className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
-                currentView === "analytics" 
-                  ? "text-cyan-400 font-bold border-cyan-400" 
-                  : "text-[#c2c6d7] hover:text-white border-transparent"
-              }`}
-            >
-              Analytics
-            </button>
-            <button 
-              onClick={() => setCurrentView("jury-sandbox")}
-              className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
-                currentView === "jury-sandbox" 
-                  ? "text-cyan-400 font-bold border-cyan-400" 
-                  : "text-[#c2c6d7] hover:text-white border-transparent"
-              }`}
-            >
-              Jury Sandbox
-            </button>
-            <button 
-              onClick={() => setCurrentView("settings")}
-              className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
-                currentView === "settings" 
-                  ? "text-cyan-400 font-bold border-cyan-400" 
-                  : "text-[#c2c6d7] hover:text-white border-transparent"
-              }`}
-            >
-              Settings
-            </button>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-6 font-mono text-[10px] tracking-widest text-white/40 uppercase">
-          <div className="hidden lg:block">V-OS 4.2.0</div>
-          <div className="hidden sm:block">Buffer: Active</div>
-          <div className="text-cyan-400 font-bold">{sysTime}</div>
-          
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
-            <img 
-              className="w-full h-full object-cover" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ93RhcjcTipFqfljUQMXyQObLtFQNBZXi2WXQLRudY0Hz41uv9VKOCMocTcI9L5Fs_Fkt6Xq6sHTJ1q0CHT3Jwmv0Vu9oWR8TRAkcMa02M7UCsIhWfzZcHYdvypnRC6Tvm2fM7b5H6zXGmUZkhH0kO125yLuhqzZu0qa8otZ0riEKVcJofuoD-JDN4d_6IXSUEwzIDXXIo8C3AF_DoEglX5rvvpZouzlt66hrVkayeakGWRzVZDODn4yRio6R72J0g5Gnlo-rgr0"
-              alt="Cybersecurity Commander Avatar"
-            />
-          </div>
-        </div>
-      </header>
+      <Header currentView={currentView} setCurrentView={setCurrentView} sysTime={sysTime} />
 
       {/* SideNavBar (Desktop Only) */}
-      <aside className="hidden md:flex flex-col h-full py-6 px-4 gap-2 bg-[#0a0a0a] border-r border-white/10 h-screen w-64 fixed left-0 top-0 pt-20 z-40">
-        <div className="px-3 mb-6">
-          <h2 className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase">Command Terminal</h2>
-          <p className="text-[10px] font-mono text-cyan-400/70">Vigilance Protocol v4.2</p>
-        </div>
-        
-        <div className="space-y-1">
-          <button 
-            onClick={() => setCurrentView("operations")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
-              currentView === "operations" 
-                ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
-                : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"
-            }`}
-          >
-            <Radio className="w-4 h-4 shrink-0" />
-            <span className="text-xs uppercase tracking-wider font-semibold">Operations</span>
-          </button>
-          <button 
-            onClick={() => setCurrentView("system-architecture")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
-              currentView === "system-architecture" 
-                ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
-                : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"
-            }`}
-          >
-            <Shield className="w-4 h-4 shrink-0" />
-            <span className="text-xs uppercase tracking-wider font-semibold">System Architecture</span>
-          </button>
-          <button 
-            onClick={() => setCurrentView("analytics")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
-              currentView === "analytics" 
-                ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
-                : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"
-            }`}
-          >
-            <TrendingUp className="w-4 h-4 shrink-0" />
-            <span className="text-xs uppercase tracking-wider font-semibold">Analytics</span>
-          </button>
-          <button 
-            onClick={() => setCurrentView("jury-sandbox")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
-              currentView === "jury-sandbox" 
-                ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
-                : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"
-            }`}
-          >
-            <Scale className="w-4 h-4 shrink-0" />
-            <span className="text-xs uppercase tracking-wider font-semibold">Jury Sandbox</span>
-          </button>
-          <button 
-            onClick={() => setCurrentView("settings")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
-              currentView === "settings" 
-                ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
-                : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"
-            }`}
-          >
-            <Settings className="w-4 h-4 shrink-0" />
-            <span className="text-xs uppercase tracking-wider font-semibold">Settings</span>
-          </button>
-        </div>
-
-        <div className="mt-auto pt-6 border-t border-white/10 space-y-3">
-          <button 
-            onClick={handleTriggerReasoning}
-            disabled={loading}
-            className="w-full py-2 bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-lg font-bold hover:brightness-110 active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-cyan-400" : ""}`} /> Deploy Patch
-          </button>
-          <a className="flex items-center gap-3 px-3 py-2 text-white/40 hover:text-white transition-colors" href="#">
-            <HelpCircle className="w-4 h-4" />
-            <span className="text-xs uppercase tracking-wider">Support</span>
-          </a>
-          <a className="flex items-center gap-3 px-3 py-2 text-white/40 hover:text-white transition-colors" href="#">
-            <FileText className="w-4 h-4" />
-            <span className="text-xs uppercase tracking-wider">Logs</span>
-          </a>
-        </div>
-      </aside>
+      <Sidebar currentView={currentView} setCurrentView={setCurrentView} loading={loading} handleTriggerReasoning={handleTriggerReasoning} />
 
       {/* Main Content Canvas */}
       <main className="md:pl-64 pt-16 min-h-screen bg-[#070707]">
@@ -944,8 +793,9 @@ NODE: asia-southeast1-run-container
 
                         <button 
                           onClick={() => handleRemoveDirective(idx)}
-                          className="text-white/30 hover:text-red-400 p-1 rounded hover:bg-white/5 transition-colors"
+                          className="text-white/30 hover:text-red-400 p-1 rounded hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
                           title="Purge Command"
+                          aria-label="Remove directive"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -1015,149 +865,29 @@ NODE: asia-southeast1-run-container
 
                 <div className="p-6">
                   {activeTab === "es" ? (
-                    <div className="space-y-4">
-                      {isEditingSpanish ? (
-                        <div className="space-y-3">
-                          <textarea
-                            value={tempSpanish}
-                            onChange={(e) => setTempSpanish(e.target.value)}
-                            rows={3}
-                            className="w-full bg-[#050505] border border-cyan-500/30 text-xs font-mono p-3 rounded-lg focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 text-cyan-400 outline-none"
-                          />
-                          <div className="flex justify-end gap-2">
-                            <button 
-                              onClick={() => setIsEditingSpanish(false)}
-                              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-[9px] font-bold rounded cursor-pointer uppercase tracking-wider text-white"
-                            >
-                              Cancel
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setSpanishScript(tempSpanish);
-                                setIsEditingSpanish(false);
-                              }}
-                              className="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-[9px] font-bold text-black rounded cursor-pointer flex items-center gap-1 uppercase tracking-wider"
-                            >
-                              <Save className="w-3 h-3" /> Save Script
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-4">
-                          <p className="font-mono text-xs italic text-cyan-400 leading-relaxed bg-black/40 p-4 border border-white/5 rounded-lg shadow-inner">
-                            "{spanishScript}"
-                          </p>
-                          
-                          {broadcasting === "es" && (
-                            <div className="text-[10px] font-mono text-cyan-400 animate-pulse bg-cyan-500/10 px-3 py-2 border border-cyan-500/20 rounded flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping"></span>
-                              Broadcasting Spanish script to volunteer megaphone arrays...
-                            </div>
-                          )}
-
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => handleBroadcast("es")}
-                              className={`flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer ${
-                                broadcasting === "es" ? "bg-red-500/20 text-red-400 border border-red-500/30" : "bg-cyan-500 text-black"
-                              }`}
-                            >
-                              {broadcasting === "es" ? (
-                                <>
-                                  <VolumeX className="w-4 h-4" /> Stop Broadcast
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="w-4 h-4 fill-current" /> Broadcast Spanish
-                                </>
-                              )}
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setTempSpanish(spanishScript);
-                                setIsEditingSpanish(true);
-                              }}
-                              className="px-3 py-2.5 border border-white/10 text-[#d1d1d1] rounded-lg hover:bg-white/5 transition-all cursor-pointer"
-                              title="Override translation"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <ScriptPanel
+                      lang="es"
+                      script={spanishScript}
+                      setScript={setSpanishScript}
+                      broadcasting={broadcasting}
+                      handleBroadcast={handleBroadcast}
+                      isEditing={isEditingSpanish}
+                      setIsEditing={setIsEditingSpanish}
+                      tempScript={tempSpanish}
+                      setTempScript={setTempSpanish}
+                    />
                   ) : (
-                    <div className="space-y-4">
-                      {isEditingFrench ? (
-                        <div className="space-y-3">
-                          <textarea
-                            value={tempFrench}
-                            onChange={(e) => setTempFrench(e.target.value)}
-                            rows={3}
-                            className="w-full bg-[#050505] border border-cyan-500/30 text-xs font-mono p-3 rounded-lg focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 text-cyan-400 outline-none"
-                          />
-                          <div className="flex justify-end gap-2">
-                            <button 
-                              onClick={() => setIsEditingFrench(false)}
-                              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-[9px] font-bold rounded cursor-pointer uppercase tracking-wider text-white"
-                            >
-                              Cancel
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setFrenchScript(tempFrench);
-                                setIsEditingFrench(false);
-                              }}
-                              className="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-[9px] font-bold text-black rounded cursor-pointer flex items-center gap-1 uppercase tracking-wider"
-                            >
-                              <Save className="w-3 h-3" /> Save Script
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-4">
-                          <p className="font-mono text-xs italic text-cyan-400 leading-relaxed bg-black/40 p-4 border border-white/5 rounded-lg shadow-inner">
-                            "{frenchScript}"
-                          </p>
-                          
-                          {broadcasting === "fr" && (
-                            <div className="text-[10px] font-mono text-cyan-400 animate-pulse bg-cyan-500/10 px-3 py-2 border border-cyan-500/20 rounded flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping"></span>
-                              Broadcasting French script to volunteer megaphone arrays...
-                            </div>
-                          )}
-
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => handleBroadcast("fr")}
-                              className={`flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold rounded-lg flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer ${
-                                broadcasting === "fr" ? "bg-red-500/20 text-red-400 border border-red-500/30" : "bg-cyan-500 text-black"
-                              }`}
-                            >
-                              {broadcasting === "fr" ? (
-                                <>
-                                  <VolumeX className="w-4 h-4" /> Stop Broadcast
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="w-4 h-4 fill-current" /> Broadcast French
-                                </>
-                              )}
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setTempFrench(frenchScript);
-                                setIsEditingFrench(true);
-                              }}
-                              className="px-3 py-2.5 border border-white/10 text-[#d1d1d1] rounded-lg hover:bg-white/5 transition-all cursor-pointer"
-                              title="Override translation"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <ScriptPanel
+                      lang="fr"
+                      script={frenchScript}
+                      setScript={setFrenchScript}
+                      broadcasting={broadcasting}
+                      handleBroadcast={handleBroadcast}
+                      isEditing={isEditingFrench}
+                      setIsEditing={setIsEditingFrench}
+                      tempScript={tempFrench}
+                      setTempScript={setTempFrench}
+                    />
                   )}
                 </div>
               </section>
@@ -1186,7 +916,7 @@ NODE: asia-southeast1-run-container
                         max="100"
                         value={gateCSliderValue}
                         onChange={(e) => setGateCSliderValue(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer focus:ring-2 focus:ring-cyan-400 focus:outline-none"
+                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
                         aria-label="Gate C Density Slider"
                         aria-valuemin={0}
                         aria-valuemax={100}
@@ -1209,7 +939,7 @@ NODE: asia-southeast1-run-container
                         max="100"
                         value={gateDSliderValue}
                         onChange={(e) => setGateDSliderValue(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer focus:ring-2 focus:ring-cyan-400 focus:outline-none"
+                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
                         aria-label="Gate D Density Slider"
                         aria-valuemin={0}
                         aria-valuemax={100}

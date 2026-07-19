@@ -117,7 +117,7 @@ const edgeCache: Record<string, CacheEntry> = {};
 export async function processGateTelemetry(requestPayload: GeminiRequestPayload) {
   // Standard model configuration for Vertex AI pipeline
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: requestPayload.model || 'gemini-2.5-flash',
     contents: requestPayload.contents,
     config: requestPayload.config || {}
   });

@@ -130,3 +130,70 @@ test("Express Endpoint - Parameter Bounding & Validation Guards", async () => {
   assert.strictEqual(res3.statusCode, 400);
   assert.match(String(res3.jsonData?.error || ""), /Missing required/);
 });
+
+test("Express Endpoint - Business Rules & Cache Integration", async () => {
+  const { default: appModule } = await import("./server");
+  const app = appModule as unknown as ExpressApp;
+  
+  const layer = app._router.stack.find(
+    (l) => l.route !== undefined && l.route.path === "/api/analyze-telemetry"
+  );
+  if (!layer || !layer.route) {
+    throw new Error("Target endpoint route handler not found in router stack.");
+  }
+  const handler = layer.route.stack[0].handle;
+
+  // Test Case A: DIVERT_PROACTIVE reasoning branch
+  const reqDivert = {
+    body: {
+      gateCDensity: 65,
+      gateDDensity: 20,
+      surgeRate: "Normal",
+      fanContext: "Standard Ingress"
+    },
+    ip: "127.0.0.1",
+    headers: {}
+  };
+  const resDivert = makeMockRes();
+  await handler(reqDivert, resDivert);
+  assert.strictEqual(resDivert.jsonData?.status_level, "DIVERT_PROACTIVE");
+  assert.strictEqual(resDivert.jsonData?.target_reroute_gate, "Gate D");
+
+  // Test Case B: Zero-Flow Lockdown override
+  const reqLockdown = {
+    body: {
+      gateCDensity: 15,
+      gateDDensity: 20,
+      surgeRate: "Zero-Flow Lockdown",
+      fanContext: "Standard Ingress"
+    },
+    ip: "127.0.0.1",
+    headers: {}
+  };
+  const resLockdown = makeMockRes();
+  await handler(reqLockdown, resLockdown);
+  assert.strictEqual(resLockdown.jsonData?.status_level, "CRITICAL");
+  assert.strictEqual(resLockdown.jsonData?.target_reroute_gate, "NONE (LOCKDOWN)");
+
+  // Test Case C: Caching (Consecutive Identical Requests)
+  const reqCache = {
+    body: {
+      gateCDensity: 45,
+      gateDDensity: 40,
+      surgeRate: "Normal",
+      fanContext: "Unique-Cache-Test"
+    },
+    ip: "127.0.0.2",
+    headers: {}
+  };
+
+  // First request (Cache MISS)
+  const resCache1 = makeMockRes();
+  await handler(reqCache, resCache1);
+  assert.strictEqual(resCache1.jsonData?.cache_status, "MISS");
+
+  // Second request (Cache HIT)
+  const resCache2 = makeMockRes();
+  await handler(reqCache, resCache2);
+  assert.strictEqual(resCache2.jsonData?.cache_status, "HIT");
+});
