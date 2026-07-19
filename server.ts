@@ -203,6 +203,18 @@ app.post("/api/analyze-telemetry", async (req, res) => {
       return res.status(400).json({ error: "Missing required telemetry parameters." });
     }
 
+    // Surge rate validation (allowlist check)
+    const validSurges = ["Nominal Flow (1.0x)", "Rush Hour Peak (2.5x)", "Emergency Surge (5.0x)", "Zero-Flow Lockdown", "Normal"];
+    if (typeof surgeRate !== "string" || !validSurges.includes(surgeRate)) {
+      return res.status(400).json({ error: "Invalid surge rate parameter." });
+    }
+
+    // Alphanumeric and basic punctuation sanitization to secure against prompt injection
+    if (typeof fanContext !== "string") {
+      return res.status(400).json({ error: "Invalid simulated fan context parameter." });
+    }
+    const sanitizedFanContext = fanContext.replace(/[^a-zA-Z0-9\s.,()-]/g, "");
+
     if (isNaN(gateCDensity) || gateCDensity < 0 || gateCDensity > 100 || isNaN(gateDDensity) || gateDDensity < 0 || gateDDensity > 100) {
       return res.status(400).json({ error: "Telemetry values must be valid numbers between 0 and 100." });
     }
@@ -212,20 +224,13 @@ app.post("/api/analyze-telemetry", async (req, res) => {
     // If Gate C crosses 80%, status_level must become 'WARNING'. If it crosses 90%, it must become 'CRITICAL'. Otherwise ACTIVE.
     const statusLevel = getStatusLevel(gateCDensity, gateDDensity, surgeRate);
 
-    let divertInstruction = "";
-    if (statusLevel === "DIVERT_PROACTIVE") {
-      const higherGate = gateCDensity > gateDDensity ? "Gate C" : "Gate D";
-      const lowerGate = gateCDensity > gateDDensity ? "Gate D" : "Gate C";
-      divertInstruction = `Proactive Diversion Required: ${higherGate} density is at ${gateCDensity > gateDDensity ? gateCDensity : gateDDensity}% capacity and ${lowerGate} is underutilized at ${gateCDensity > gateDDensity ? gateDDensity : gateCDensity}%. You MUST explicitly advise routing and diverting spectators from ${higherGate} to ${lowerGate}.`;
-    }
-
     const binnedGateC = Math.round(gateCDensity / 5) * 5;
     const binnedGateD = Math.round(gateDDensity / 5) * 5;
 
     // 2. IMUTABLE KEY GENERATION: Generate the composite cache key using these freshly binned raw values and the calculated statusLevel BEFORE any conditional overrides alter the data pipeline
     const metroSurge = surgeRate;
     const metricsArray = [binnedGateC, binnedGateD];
-    const cacheKey = `${JSON.stringify(metricsArray)}-${statusLevel}-${String(metroSurge || "").trim()}-${String(fanContext || "").trim()}`;
+    const cacheKey = `${JSON.stringify(metricsArray)}-${statusLevel}-${String(metroSurge || "").trim()}-${String(sanitizedFanContext || "").trim()}`;
 
     // --- Step 3: Edge Cache Lookup (90-Second TTL Evaluation) ---
     // 3. CHECK CACHE STORE: Look up the cacheKey. If it exists, return the cached payload instantly
@@ -240,18 +245,8 @@ app.post("/api/analyze-telemetry", async (req, res) => {
     console.log(`[CACHE_MISS] Fetching fresh XAI reasoning from Gemini for key: ${cacheKey}`);
 
     // Determine tone based on fanContext
-    const isMedicalDistress = fanContext.toLowerCase().includes("medical");
+    const isMedicalDistress = sanitizedFanContext.toLowerCase().includes("medical");
     const toneApplied = (surgeRate === "Zero-Flow Lockdown" || isMedicalDistress) ? "Urgent / Directive" : (statusLevel === "CRITICAL" ? "Urgent / Alert" : "Calm / Informational");
-
-    const telemetryText = `
-Telemetry Data:
-- Gate C Density: ${gateCDensity}%
-- Gate D Density: ${gateDDensity}%
-- Metro Hub Flow Surge Rate: ${surgeRate}
-- Simulated Fan Context: ${fanContext}
-- Calculated Status Level: ${statusLevel}
-- Tone Applied: ${toneApplied}
-`;
 
     const sourceGate = gateCDensity > gateDDensity ? "Gate C" : "Gate D";
     const targetGate = gateCDensity > gateDDensity ? "Gate D" : "Gate C";
@@ -319,14 +314,13 @@ Telemetry Data:
       } else if (gateCDensity >= 41 && gateCDensity <= 79) {
         targetReasoningOutput = `Gate C is getting busy at ${gateCDensity}% due to the Metro flow. Gate D is open at ${gateDDensity}%. We should monitor this closely.`;
       } else {
-        targetReasoningOutput = `Gate C is completely jammed right now at ${gateCDensity}% because a massive crowd just came in from the Metro for the ${fanContext}. Meanwhile, Gate D is totally empty at only ${gateDDensity}%. We need to quickly guide people over to Gate D so everyone gets inside safely.`;
+        targetReasoningOutput = `Gate C is completely jammed right now at ${gateCDensity}% because a massive crowd just came in from the Metro for the ${sanitizedFanContext}. Meanwhile, Gate D is totally empty at only ${gateDDensity}%. We need to quickly guide people over to Gate D so everyone gets inside safely.`;
       }
     }
 
     // --- Step 4: Explainable AI (XAI) Inference & Multilingual Relay Generation ---
     let result;
     try {
-      let response;
       const requestPayload = {
         model: "gemini-3.5-flash",
         contents: `You are the Pulse26 Stadium Telemetry Engine. Your primary directive is to analyze crowd-flow distribution across Sector North without ever interchanging or misrepresenting the raw gate telemetry values.
@@ -377,7 +371,7 @@ Requirements:
         }
       };
 
-      response = await processGateTelemetry(requestPayload);
+      const response = await processGateTelemetry(requestPayload);
 
       const resultText = response.text;
       if (!resultText) {

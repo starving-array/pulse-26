@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-4">
         <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
         <span className="font-sans text-sm font-bold tracking-[0.3em] uppercase text-white">
-          Pulse26 <span className="text-white/50 font-light ml-1">// System Core</span>
+          Pulse26 <span className="text-white/50 font-light ml-1">{"// System Core"}</span>
         </span>
         <div role="tablist" aria-label="Main Views Tablist" className="hidden md:flex gap-6 ml-10 items-center h-full">
           <button 

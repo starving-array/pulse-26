@@ -4,6 +4,18 @@ Pulse26 is a next-generation Explainable AI (XAI) operational terminal designed 
 
 ---
 
+## Problem Statement & Architectural Alignment
+
+| Hackathon Track Requirement | Pulse26 Architectural Solution | Code File/Component Reference |
+| :--- | :--- | :--- |
+| **Separation of Concerns & Modularity** | Decoupled view-based architecture separating cockpit settings, system blueprints, and operations. | [App.tsx](file:///c:/Users/lovea/Downloads/pulse26/src/App.tsx) & [src/views/](file:///c:/Users/lovea/Downloads/pulse26/src/views/) |
+| **Reliability & Cache Tuning** | 90-second edge cache key compiling with strict string normalization and `.trim()`. | [server.ts](file:///c:/Users/lovea/Downloads/pulse26/server.ts#L240) |
+| **Defensive Input Validation** | Bound validation constraints checking density range numbers (0-100) and allowed list for surges. | [server.ts](file:///c:/Users/lovea/Downloads/pulse26/server.ts#L206) |
+| **Accessibility Standard Compliance** | Keyboard tabbed lists, focus ring outline visible classes, and high text contrast compliance. | [Header.tsx](file:///c:/Users/lovea/Downloads/pulse26/src/components/Header.tsx) & [Sidebar.tsx](file:///c:/Users/lovea/Downloads/pulse26/src/components/Sidebar.tsx) |
+| **CI/CD Quality Enforcement** | Automated GitHub Actions executing strict typechecks and Native test runs on pushes/PRs. | [.github/workflows/ci.yml](file:///c:/Users/lovea/Downloads/pulse26/.github/workflows/ci.yml) |
+
+---
+
 ## 1. Hackathon Rubric Alignment Mapping
 
 | Hackathon Requirement | Pulse26 Feature Solution | Code File Reference |

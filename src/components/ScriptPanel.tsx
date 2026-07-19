@@ -57,7 +57,7 @@ export const ScriptPanel: React.FC<ScriptPanelProps> = ({
       ) : (
         <div className="flex flex-col gap-4">
           <p className="font-mono text-xs italic text-cyan-400 leading-relaxed bg-black/40 p-4 border border-white/5 rounded-lg shadow-inner">
-            "{script}"
+            {"\""}{script}{"\""}
           </p>
           
           {broadcasting === lang && (
