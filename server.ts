@@ -188,21 +188,22 @@ app.post("/api/analyze-telemetry", async (req, res) => {
       return res.status(429).json({ error: "Too many requests. Please try again later." });
     }
 
-    // --- Step 1: Perimeter Security & Parameter Bounds Validation (0-100) ---
-    // 1. CAPTURE & BIN FIRST: At the absolute top of the request function, capture the raw gateCDensity and gateDDensity from the sandbox inputs and apply the 5% binning formula immediately
-    const { gateCDensity: reqGateCDensity, gateDDensity: reqGateDDensity, gateCSliderValue, gateDSliderValue, surgeRate, fanContext, reasoningOutputPrompt } = req.body;
+    const { surgeRate, fanContext, reasoningOutputPrompt } = req.body;
+    const gateCDensity = Number(req.body.gateCSliderValue !== undefined ? req.body.gateCSliderValue : req.body.gateCDensity);
+    const gateDDensity = Number(req.body.gateDSliderValue !== undefined ? req.body.gateDSliderValue : req.body.gateDDensity);
 
-    const gateCDensity = gateCSliderValue !== undefined ? gateCSliderValue : reqGateCDensity;
-    const gateDDensity = gateDSliderValue !== undefined ? gateDSliderValue : reqGateDDensity;
-
-    if (gateCDensity === undefined || gateDDensity === undefined || gateCDensity === null || gateDDensity === null || !surgeRate || !fanContext) {
+    if (
+      (req.body.gateCDensity === undefined && req.body.gateCSliderValue === undefined) ||
+      (req.body.gateDDensity === undefined && req.body.gateDSliderValue === undefined) ||
+      req.body.gateCDensity === null ||
+      req.body.gateDDensity === null ||
+      !surgeRate ||
+      !fanContext
+    ) {
       return res.status(400).json({ error: "Missing required telemetry parameters." });
     }
 
-    // Input parameter bounds (0-100) validation guard rail
-    const numC = Number(gateCDensity);
-    const numD = Number(gateDDensity);
-    if (isNaN(numC) || numC < 0 || numC > 100 || isNaN(numD) || numD < 0 || numD > 100) {
+    if (isNaN(gateCDensity) || gateCDensity < 0 || gateCDensity > 100 || isNaN(gateDDensity) || gateDDensity < 0 || gateDDensity > 100) {
       return res.status(400).json({ error: "Telemetry values must be valid numbers between 0 and 100." });
     }
 
@@ -224,7 +225,7 @@ app.post("/api/analyze-telemetry", async (req, res) => {
     // 2. IMUTABLE KEY GENERATION: Generate the composite cache key using these freshly binned raw values and the calculated statusLevel BEFORE any conditional overrides alter the data pipeline
     const metroSurge = surgeRate;
     const metricsArray = [binnedGateC, binnedGateD];
-    const cacheKey = `${JSON.stringify(metricsArray)}-${statusLevel}-${metroSurge}-${fanContext}`;
+    const cacheKey = `${JSON.stringify(metricsArray)}-${statusLevel}-${String(metroSurge || "").trim()}-${String(fanContext || "").trim()}`;
 
     // --- Step 3: Edge Cache Lookup (90-Second TTL Evaluation) ---
     // 3. CHECK CACHE STORE: Look up the cacheKey. If it exists, return the cached payload instantly

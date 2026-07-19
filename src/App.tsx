@@ -807,6 +807,7 @@ NODE: asia-southeast1-run-container
                   <form onSubmit={handleAddDirective} className="flex gap-2 pt-4 mt-2 border-t border-white/5">
                     <input 
                       type="text"
+                      maxLength={140}
                       placeholder="Add tactical instruction parameter on the ground..."
                       value={newDirectiveText}
                       onChange={(e) => setNewDirectiveText(e.target.value)}
@@ -922,7 +923,7 @@ NODE: asia-southeast1-run-container
                         aria-valuemax={100}
                         aria-valuenow={gateCSliderValue}
                       />
-                      <div className="flex justify-between text-[9px] font-mono text-white/20">
+                      <div className="flex justify-between text-[9px] font-mono text-white/50">
                         <span>Min Flow</span>
                         <span>Compounded Queue Threshold (80% / 90%)</span>
                       </div>
@@ -1221,7 +1222,7 @@ NODE: asia-southeast1-run-container
                         </svg>
                       </div>
 
-                      <div className="flex justify-between font-mono text-[9px] text-white/20 pt-1">
+                      <div className="flex justify-between font-mono text-[9px] text-white/50 pt-1">
                         <span>-60 min</span>
                         <span>-30 min</span>
                         <span>Active Peak (1.2x)</span>

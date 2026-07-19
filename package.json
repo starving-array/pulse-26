@@ -1,5 +1,6 @@
 {
   "name": "react-example",
+  "description": "Pulse26 is a next-generation Explainable AI (XAI) operational terminal for stadium crowd routing and volunteer directives during the 2026 World Cup.",
   "private": true,
   "version": "0.0.0",
   "type": "module",

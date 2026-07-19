@@ -27,7 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-selected={currentView === "operations"}
           aria-current={currentView === "operations" ? "page" : undefined}
           onClick={() => setCurrentView("operations")}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
             currentView === "operations" 
               ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
               : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"
@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-selected={currentView === "system-architecture"}
           aria-current={currentView === "system-architecture" ? "page" : undefined}
           onClick={() => setCurrentView("system-architecture")}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
             currentView === "system-architecture" 
               ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
               : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"
@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-selected={currentView === "analytics"}
           aria-current={currentView === "analytics" ? "page" : undefined}
           onClick={() => setCurrentView("analytics")}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
             currentView === "analytics" 
               ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
               : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"
@@ -69,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-selected={currentView === "jury-sandbox"}
           aria-current={currentView === "jury-sandbox" ? "page" : undefined}
           onClick={() => setCurrentView("jury-sandbox")}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
             currentView === "jury-sandbox" 
               ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
               : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"
@@ -83,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-selected={currentView === "settings"}
           aria-current={currentView === "settings" ? "page" : undefined}
           onClick={() => setCurrentView("settings")}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left ${
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold transition-all border text-left focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
             currentView === "settings" 
               ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold" 
               : "text-white/50 hover:text-white hover:bg-white/[0.02] border-transparent"

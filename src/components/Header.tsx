@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-4">
         <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
         <span className="font-sans text-sm font-bold tracking-[0.3em] uppercase text-white">
-          Pulse26 <span className="text-white/20 font-light ml-1">// System Core</span>
+          Pulse26 <span className="text-white/50 font-light ml-1">// System Core</span>
         </span>
         <div role="tablist" aria-label="Main Views Tablist" className="hidden md:flex gap-6 ml-10 items-center h-full">
           <button 
@@ -24,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-selected={currentView === "operations"}
             aria-current={currentView === "operations" ? "page" : undefined}
             onClick={() => setCurrentView("operations")}
-            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
+            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none rounded ${
               currentView === "operations" 
                 ? "text-cyan-400 font-bold border-cyan-400" 
                 : "text-[#c2c6d7] hover:text-white border-transparent"
@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-selected={currentView === "system-architecture"}
             aria-current={currentView === "system-architecture" ? "page" : undefined}
             onClick={() => setCurrentView("system-architecture")}
-            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
+            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none rounded ${
               currentView === "system-architecture" 
                 ? "text-cyan-400 font-bold border-cyan-400" 
                 : "text-[#c2c6d7] hover:text-white border-transparent"
@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-selected={currentView === "analytics"}
             aria-current={currentView === "analytics" ? "page" : undefined}
             onClick={() => setCurrentView("analytics")}
-            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
+            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none rounded ${
               currentView === "analytics" 
                 ? "text-cyan-400 font-bold border-cyan-400" 
                 : "text-[#c2c6d7] hover:text-white border-transparent"
@@ -63,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-selected={currentView === "jury-sandbox"}
             aria-current={currentView === "jury-sandbox" ? "page" : undefined}
             onClick={() => setCurrentView("jury-sandbox")}
-            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
+            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none rounded ${
               currentView === "jury-sandbox" 
                 ? "text-cyan-400 font-bold border-cyan-400" 
                 : "text-[#c2c6d7] hover:text-white border-transparent"
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-selected={currentView === "settings"}
             aria-current={currentView === "settings" ? "page" : undefined}
             onClick={() => setCurrentView("settings")}
-            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b ${
+            className={`text-xs tracking-widest uppercase transition-colors pb-1 border-b focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none rounded ${
               currentView === "settings" 
                 ? "text-cyan-400 font-bold border-cyan-400" 
                 : "text-[#c2c6d7] hover:text-white border-transparent"
