@@ -25,6 +25,9 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
+// Handle favicon requests instantly with 204 No Content
+app.get("/favicon.ico", (req, res) => res.status(204).end());
+
 const ai = new GoogleGenAI({
   vertexai: true,
   project: process.env.GOOGLE_CLOUD_PROJECT,
