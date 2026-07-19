@@ -46,7 +46,7 @@ app.use((req, res, next) => {
 
 const PORT = Number(process.env.PORT) || 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: "10kb" }));
 
 // Handle favicon requests instantly with 204 No Content
 app.get("/favicon.ico", (req, res) => res.status(204).end());

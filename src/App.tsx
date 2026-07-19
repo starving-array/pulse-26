@@ -963,6 +963,7 @@ NODE: asia-southeast1-run-container
                       className="flex-1 bg-black/40 border border-white/10 text-xs text-white rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 placeholder-white/20 font-mono"
                     />
                     <select
+                      aria-label="Select Directive Priority Level"
                       value={newDirectivePriority}
                       onChange={(e) => setNewDirectivePriority(e.target.value as "HIGH" | "MED" | "LOW")}
                       className="bg-black/40 border border-white/10 text-[10px] text-white rounded-lg px-2 py-2 focus:ring-1 focus:ring-cyan-400 font-mono"
